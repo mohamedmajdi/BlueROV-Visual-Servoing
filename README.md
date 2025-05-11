@@ -46,14 +46,6 @@ In addition, we implemented a visual servoing system for a Franka Panda robot ar
 <p>Aruca markres detection underwater</p>
 </div>
 
-- **Franka Panda IBVS Simulation in PyBullet**  
-  Simulated a Franka Panda robot arm using PyBullet, tracking a red ball via an end-effector-mounted camera. The robot adjusts its joint configurations based on image-space error using IBVS control.
-
-<div align="center">
-<img src = "Media/franka.png" width="40%">
-<p>Franka Panda simulation</p>
-</div>
-
 - **Control Pipeline & Velocity Mapping**  
   Computed camera-frame velocities from image-space error using the pseudo-inverse of the interaction matrix. These velocities are transformed into body-frame commands and converted to PWM signals to drive the ROV thrusters safely.
 
@@ -87,6 +79,13 @@ $$
 - **Autonomous Behavior via Finite State Machine**  
   Designed a simple FSM with two states: `SEARCH` and `TRACK`. In `SEARCH`, the ROV rotates to locate the buoy. Once detected, it switches to `TRACK`, engaging the IBVS loop until the buoy is lost, at which point it reverts to searching.
 
+- **Franka Panda IBVS Simulation in PyBullet**  
+  Simulated a Franka Panda robot arm using PyBullet, tracking a red ball via an end-effector-mounted camera. The robot adjusts its joint configurations based on image-space error using IBVS control.
+
+<div align="center">
+<img src = "Media/franka.png" width="40%">
+<p>Franka Panda simulation</p>
+</div>
 
 ## Results
 ### BlueROV Practical Results
