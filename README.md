@@ -123,4 +123,6 @@ https://github.com/user-attachments/assets/1e443d56-d7a0-478c-a68b-60ab46f2091c
 
 The project Demo video result is given bellow.
 
-https://github.com/mohamedmajdi/BlueROV-Visual-Servoing/issues/1#issue-3055028870
+
+[![Watch the video](https://github.com/mohamedmajdi/BlueROV-Visual-Servoing/raw/main/Media/vdo.png)](https://user-images.githubusercontent.com/104582363/238317706-13e5c9be-3d9d-4f32-bf82-2426bd4a1105.mp4)
+
