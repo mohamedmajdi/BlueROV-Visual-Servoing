@@ -118,3 +118,6 @@ https://github.com/user-attachments/assets/1e443d56-d7a0-478c-a68b-60ab46f2091c
 <img src = "Media/IBVS_simulation_Results.png" width="50%">
 <p>IBVS Simulation Results</p>
 </div>
+## 📹 Project Demo
+
+<video src="https://github.com/mohamedmajdi/BlueROV-Visual-Servoing/issues/1#issue-3055028870" controls width="600"></video>
