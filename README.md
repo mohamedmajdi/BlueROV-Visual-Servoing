@@ -89,6 +89,9 @@ $$
 
 ## Results
 ### BlueROV Practical Results
+
+https://github.com/user-attachments/assets/09a31ded-2902-4222-95da-5311a0c7ca3e
+
 Two experiments were conducted to evaluate visual servoing performance with the BlueROV. 
 
 The first experiment focused on controlling one degree of freedom (DoF) at a time using a simplified interaction matrix derived from two image lines, without incorporating any distance tracking. This approach aimed to isolate and assess the effect of individual motions—such as sway or yaw—on image-based control. However, results revealed that the robot exhibited unintended movement along the surge (x) axis when performing sway or yaw actions, indicating coupling between the degrees of freedom that the simplified model could not account for.
@@ -118,11 +121,3 @@ https://github.com/user-attachments/assets/1e443d56-d7a0-478c-a68b-60ab46f2091c
 <img src = "Media/IBVS_simulation_Results.png" width="50%">
 <p>IBVS Simulation Results</p>
 </div>
-
-**## 📹 Project Demo**
-
-The project Demo video result is given bellow.
-
-https://github.com/user-attachments/assets/09a31ded-2902-4222-95da-5311a0c7ca3e
-
-
