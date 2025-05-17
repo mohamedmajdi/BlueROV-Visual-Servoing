@@ -43,6 +43,11 @@ class MyPythonNode(Node):
         self.pub_esstimated_heave = self.create_publisher(Float64,'heave',10)
         self.pub_depth_trajectory= self.create_publisher(Float64,'depth_trajectory',10)
         self.pub_heave_trajectory = self.create_publisher(Float64,'heave_trajectory',10)
+
+
+        self.pub_surge = self.create_publisher(Float64,'surge',10)
+        self.pub_surge_error = self.create_publisher(Float64,'surge_error',10)
+        
         
         self.pub_yaw_trajectory = self.create_publisher(Float64,'yaw_trajectory',10)
         self.pub_r_trajectory = self.create_publisher(Float64,'r_trajectory',10)
@@ -120,6 +125,7 @@ class MyPythonNode(Node):
         # corrections for control
         self.Correction_yaw = 1500
         self.Correction_depth = 1500
+        self.Correction_surge = 1500
 
                
         ## TODO ##
@@ -149,12 +155,27 @@ class MyPythonNode(Node):
         
         
         # yaw parameters 
-        self.yaw_desired = np.pi/2
-        self.kp_yaw = 500
+        self.yaw_desired =np.pi ## in radians
+        self.kp_yaw = 2.5
         self.ki_yaw = 0
         self.kd_yaw = 0
         self.step_yaw = 0
         self.error_sum_yaw = 0
+        self.current_yaw = 0
+
+        # object avoidance parameters
+        self.object_distance = 70
+        self.pinger_dz = 50
+        self.object_th = 30
+        self.object_state = "Free" 
+        self.kp_surge = 0.6
+        self.ki_surge = 0
+        self.kd_surge = 0
+        self.error_sum_surge = 0
+        self.pinger_readings = []
+        self.init_s0 = True
+        
+        
 
         ## Visual servo parameters
         self.Camera_cooriction_surge = 1500
@@ -247,7 +268,9 @@ class MyPythonNode(Node):
             return
         elif self.set_mode[2]:
             # send commands in correction mode
-            self.setOverrideRCIN(1500, 1500, self.Correction_depth, self.Correction_yaw, 1500, 1500)
+            # self.setOverrideRCIN(1500, 1500, self.Correction_depth, self.Correction_yaw, self.Correction_surge, 1500)
+            self.setOverrideRCIN(1500, 1500, 1500, self.Correction_yaw, self.Correction_surge, 1500)
+
         else:  # normally, never reached
             pass
 
@@ -394,9 +417,11 @@ class MyPythonNode(Node):
         if (btn_corrected_mode and not self.set_mode[2]):
             self.init_a0 = True
             self.init_p0 = True
+            self.init_s0 = True
             
             self.step = 0
             self.step_yaw = 0
+            
             
             
             # set sum errors to 0 here, ex: Sum_Errors_Vel = [0]*3
@@ -522,7 +547,7 @@ class MyPythonNode(Node):
         angle_roll = np.arctan2(sinr_cosp, cosr_cosp)
         angle_pitch = np.arcsin(sinp)
         angle_yaw = np.arctan2(siny_cosp, cosy_cosp)
-
+        self.cuurent_yaw = angle_yaw
 
         if (self.init_a0):
             # at 1st execution, init
@@ -569,13 +594,16 @@ class MyPythonNode(Node):
         if (self.set_mode[0]):
             return
 
-        kp_yaw = 2.5
+        kp_yaw = 0.9
         # Send PWM commands to motors
         # yaw command to be adapted using sensor feedback
         error_angle = self.yaw_desired + self.angle_yaw_a0 - angle_yaw
         
         error_angle = self.normalize_angle(error_angle)
         force = kp_yaw * error_angle
+        msg_d = Float64()
+        msg_d.data =float(self.yaw_desired)
+        self.pub_yaw_trajectory.publish(msg_d)
         
         # rate = 25 
         # if  self.step_yaw / rate < self.t_final:
@@ -599,13 +627,13 @@ class MyPythonNode(Node):
         # force = self.kp_yaw * error + self.ki_yaw * self.error_sum_yaw
         
         rate = 25
-        kd_yaw = 25
-        ki_yaw = 0.1
+        kd_yaw = 0
+        ki_yaw = 0
         yaw_dot_error =  r
         # force =  kd_yaw * yaw_dot_error
         self.error_sum_yaw += error_angle / rate
-        # force = self.kp_yaw * error + self.ki_yaw * self.error_sum_yaw
-        force = kd_yaw * yaw_dot_error 
+        force = kp_yaw * error_angle + kd_yaw * yaw_dot_error+ ki_yaw * self.error_sum_yaw
+        # force = kd_yaw * yaw_dot_error 
         
         pwm = self.force_pwm(force/4)
         self.Correction_yaw = pwm
@@ -753,8 +781,59 @@ class MyPythonNode(Node):
 
 
     def pingerCallback(self, data):
-        self.pinger_distance = data.data[0]
+        self.pinger_distance = data.data[0]*100
         self.pinger_confidence = data.data[1]
+        self.object_avoidance()
+
+    def distance_stable(self,window_size = 10, threshold = 2.0):
+        self.pinger_readings.append(self.pinger_distance)
+        if len(self.pinger_readings) < window_size:
+            return False
+        elif len(self.pinger_readings) > window_size:
+            self.pinger_readings.pop(0)
+        return max(self.pinger_readings) - min(self.pinger_readings) < threshold
+
+    def object_avoidance(self):
+        if self.init_s0:
+            self.object_state = "Free"
+            self.init_s0 = False
+            self.pinger_readings = []
+            self.error_sum_surge = 0
+
+        rate = 25
+        if self.object_state == "Free":
+            if self.pinger_dz <self.pinger_distance < self.object_distance :
+                self.object_state = "Hold"
+                self.get_logger().info("Hold")
+            else:
+                
+                self.Correction_surge = 1530
+        elif self.object_state == "Hold":
+            e = self.pinger_distance - self.object_distance 
+            self.error_sum_surge += e/rate
+            force = self.kp_surge * e + self.ki_surge * self.error_sum_surge
+            pwm = self.force_pwm(force/4)
+            self.Correction_surge = pwm
+            msg = Float64()
+            msg_e = Float64()
+            msg.data = force
+            msg_e.data = e
+            self.pub_surge.publish(msg)
+            self.pub_surge_error.publish(msg_e)
+            if self.distance_stable():
+                self.object_state = "Explore"
+                self.get_logger().info("Explore")
+
+        elif self.object_state == 'Explore':
+            self.Correction_surge = 1500
+            if self.pinger_distance > (self.object_distance + self.object_th):
+                self.object_state = "Free" 
+                self.error_sum_surge = 0
+                self.pinger_readings = []
+                self.get_logger().info("Free")
+            elif((self.yaw_desired - np.deg2rad(3)) < self.current_yaw < (self.yaw_desired - np.deg2rad(3))):
+                self.yaw_desired += np.deg2rad(-15)
+
 
 
     # self.get_logger().info("pinger_distance =" + str(self.pinger_distance))
