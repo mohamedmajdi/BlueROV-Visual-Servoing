@@ -784,6 +784,7 @@ class MyPythonNode(Node):
         self.pinger_distance = data.data[0]*100
         self.pinger_confidence = data.data[1]
         self.object_avoidance()
+        #self.sideways_movement()
 
     def distance_stable(self,window_size = 10, threshold = 2.0):
         self.pinger_readings.append(self.pinger_distance)
@@ -837,6 +838,57 @@ class MyPythonNode(Node):
 
 
     # self.get_logger().info("pinger_distance =" + str(self.pinger_distance))
+
+    def sideways_movement(self):
+        if self.int_s0:
+            self.object_state = "forward" #state at the beginning
+            self.init_s0 = False #only first time run
+            self.pinger_readings = []
+            self.error_sum_surge = 0
+    
+        rate = 25                          
+        if self.object_state == "forward":
+            if self.pinger_dz <self.pinger_distance < self.object_distance : #stop when a wall is detected below 70 cm, the pinger has a “dead zone” below 50 cm 
+                self.object_state = "stop"
+                self.get_logger().info("stop")
+            else:
+                self.Correction_surge = 1530 #fed to heading control
+        elif self.object_state == "stop":
+            ##yaw_compensation
+            e = self.pinger_distance - self.object_distance 
+            self.error_sum_surge += e/rate
+            force = self.kp_surge * e + self.ki_surge * self.error_sum_surge # control thrusters to keep itself at fixed distance (70cm) from the wall
+            pwm = self.force_pwm(force/4) 
+            self.Correction_surge = pwm  
+            msg = Float64()
+            msg_e = Float64()
+            msg.data = force
+            msg_e.data = e
+            self.pub_surge.publish(msg)
+            self.pub_surge_error.publish(msg_e)
+            if self.distance_stable():
+                self.object_state = "sideways"
+                self.get_logger().info("sideways")
+    
+        elif self.object_state == 'sideways':
+            #combine two controllers simultaneously 
+            
+            # (1) moving sideways
+            self.Correction_sway = 1530
+            # (2) maintaining distance to the wall
+            e = self.pinger_distance - self.object_distance 
+            self.error_sum_surge += e/rate
+            force = self.kp_surge * e + self.ki_surge * self.error_sum_surge # control thrusters to keep itself at fixed distance (70cm) from the wall
+            pwm = self.force_pwm(force/4) 
+            self.Correcn_depth = pwm    
+            msg = Float64()
+            msg_e = Float64()
+            msg.data = force
+            msg_e.data = e
+            self.pub_surge.publish(msg)
+            self.pub_surge_error.publish(msg_e)
+
+    
     def Skew(t):
         """Return the skew-symmetric matrix of a 3x1 vector"""
         return np.array([
