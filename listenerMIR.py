@@ -155,7 +155,7 @@ class MyPythonNode(Node):
         
         
         # yaw parameters 
-        self.yaw_desired =np.pi ## in radians
+        self.yaw_desired = 0## in radians
         self.kp_yaw = 2.5
         self.ki_yaw = 0
         self.kd_yaw = 0
@@ -557,6 +557,7 @@ class MyPythonNode(Node):
             self.init_a0 = False
             self.step_yaw = 0
             self.error_sum_yaw = 0
+            self.yaw_desired += self.angle_yaw_a0
 
 
         angle_wrt_startup = [0] * 3
@@ -597,7 +598,7 @@ class MyPythonNode(Node):
         kp_yaw = 0.9
         # Send PWM commands to motors
         # yaw command to be adapted using sensor feedback
-        error_angle = self.yaw_desired + self.angle_yaw_a0 - angle_yaw
+        error_angle = self.yaw_desired - angle_yaw
         
         error_angle = self.normalize_angle(error_angle)
         force = kp_yaw * error_angle
@@ -786,13 +787,17 @@ class MyPythonNode(Node):
         self.object_avoidance()
         #self.sideways_movement()
 
-    def distance_stable(self,window_size = 10, threshold = 2.0):
+    def distance_stable(self,window_size = 10, threshold = 2.0,tolerance = 0.5):
         self.pinger_readings.append(self.pinger_distance)
         if len(self.pinger_readings) < window_size:
             return False
         elif len(self.pinger_readings) > window_size:
             self.pinger_readings.pop(0)
-        return max(self.pinger_readings) - min(self.pinger_readings) < threshold
+        if max(self.pinger_readings) - min(self.pinger_readings) >= threshold:
+            return False
+    
+        average = sum(self.pinger_readings) / len(self.pinger_readings)
+        return abs(average - self.object_dis) < tolerance
 
     def object_avoidance(self):
         if self.init_s0:
@@ -826,14 +831,15 @@ class MyPythonNode(Node):
                 self.get_logger().info("Explore")
 
         elif self.object_state == 'Explore':
+            self.get_logger().info(f"yaw_desired = {self.yaw_desired}")
             self.Correction_surge = 1500
             if self.pinger_distance > (self.object_distance + self.object_th):
                 self.object_state = "Free" 
                 self.error_sum_surge = 0
                 self.pinger_readings = []
                 self.get_logger().info("Free")
-            elif((self.yaw_desired - np.deg2rad(3)) < self.current_yaw < (self.yaw_desired - np.deg2rad(3))):
-                self.yaw_desired += np.deg2rad(-15)
+            elif((self.yaw_desired - np.deg2rad(1)) < self.current_yaw < (self.yaw_desired + np.deg2rad(1))):
+                self.yaw_desired += np.deg2rad(5)
 
 
 
