@@ -117,7 +117,60 @@ We implemented a Visual Servoing system for a Franka Panda robot in a PyBullet s
 
 https://github.com/user-attachments/assets/1e443d56-d7a0-478c-a68b-60ab46f2091c 
 
+
 <div align="center">
 <img src = "Media/IBVS_simulation_Results.png" width="50%">
 <p>IBVS Simulation Results</p>
 </div>
+
+
+
+## Implementation of an Aautonomous Behavior on the BlueROV
+
+Autonomous underwater vehicles, such as the BlueROV, require robust control strategies for precise navigation, obstacle avoidance, and station-keeping. This project aims to develop autonomous behavior for the BlueROV, focusing on maintaining a fixed heading while moving forward, detecting obstacles, and maneuvering around them to continue navigation. In addition, it focuses on moving the robot sideways, perpendicularly to a wall at a fixed distance from a wall. The primary control components implemented in this study include a trajectory following P controller for depth regulation, a P controller for heading and yaw control, and a Ping Sonar Echosounder for obstacle detection. Sensors utilized in the project include an Inertial Measurement Unit (IMU) for yaw angle measurements and a frontal echosounder pinger for detecting forward-facing obstacles. The experimental environment comprises a tank with static obstacles such as vertical wooden boards, tank walls, and other BlueROVs.
+
+The autonomous navigation system is implemented as a state machine to achieve obstacle avoidance, free path exploration, and sideways motion. This approach enables the robot to navigate through unknown environments by combining forward motion, sideways motion, obstacle detection, and systematic exploration of alternative paths. The autonomous behavior is structured as a finite state machine with three primary operational states. The states are explained below:
+
+- State 1 : Free: The robot maintains forward motion with a fixed heading using a surge motion value of 1520. This represents the default exploratory behavior where the robot advances through the environment until an obstacle or wall is detected.
+- State 2 : Hold: When an obstacle or wall is detected, the robot transitions to a holding state. During this phase, the system calculates the error between current pinger distance and desired distance, implements a PI controller with error summation, and computes the control force to apply to the surge motion. The robot remains in this state until distance measurements stabilize within a small interval.
+- State 3 : Mission Specific Task:} Upon stabilization, the robot select a third state to transition to it depending on the mission:
+
+    - Explore: The robot performs a rotational search, slowly rotating on the spot while monitoring distance measurements from the echosounder pinger to find a free path.
+    - SideWays: The robot executes lateral motion (sway) and monitor the pinger distance to maintain a fixed distance from a wall, enabling wall-following behavior.
+ 
+
+<div align="center">
+<img src = "Media/autonomous_states_chart.png" width="50%">
+<p>Autonomous Behavior State Machine</p>
+</div>
+
+
+### Autonomous Behavior Results
+
+#### Exploration Task
+
+
+
+
+https://github.com/user-attachments/assets/9bf5a410-aa55-4df0-80fa-07d66589b308
+
+
+
+
+https://github.com/user-attachments/assets/17e68b1c-5aac-48b6-9e20-bf4a75d3c0ca
+
+
+
+https://github.com/user-attachments/assets/3305bbc6-eabb-42b2-af81-26f6c3093b08
+
+
+
+
+#### SideWays Movement Task
+
+
+
+https://github.com/user-attachments/assets/cf76d125-76cd-4d2e-8613-e97df7d67924
+
+
+
