@@ -1,5 +1,16 @@
 # Implementation of Image-Based Visual Servoing Control
 
+* [Overview](#overview)
+* [Work Done](#work-done)
+* [Results](#results)
+  + [BlueROV Practical Results](#bluerov-practical-results)
+  + [Simulation Results](#simulation-results)
+* [Implementation of an Aautonomous Behavior on the BlueROV](#implementation-of-an-aautonomous-behavior-on-the-bluerov)
+  + [Autonomous Behavior Results](#autonomous-behavior-results)
+    - [Exploration Task](#exploration-task)
+    - [SideWays Movement Task](#sideways-movement-task)
+
+
 ## Overview
 
 IBVS (Image-Based Visual Servoing) is a control strategy used in robotics where the robot’s movements are directly controlled based on the error between the current image (from a camera) and a target image or position. The primary idea is to minimize the difference between the target object's image or position and its actual position in the camera view. This approach allows the robot to perform tasks like object tracking grasping, and different manipulation tasks solely using visual information from the camera.
